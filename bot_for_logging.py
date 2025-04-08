@@ -22,3 +22,12 @@ def get_logger(tg_bot, chat_id):
     logger.addHandler(tg_handler)
 
     return logger
+
+
+def tg():
+    import telegram
+
+    print(telegram.__version__)
+
+
+tg()

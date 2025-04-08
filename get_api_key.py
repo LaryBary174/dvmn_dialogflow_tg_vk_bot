@@ -1,4 +1,3 @@
-
 from google.cloud import api_keys_v2
 from google.cloud.api_keys_v2 import Key
 
@@ -36,5 +35,3 @@ def create_api_key(project_id: str, suffix: str) -> Key:
     # For authenticating with the API key, use the value in "response.key_string".
     # To restrict the usage of this API key, use the value in "response.name".
     return response
-
-print(create_api_key("denis-lxju",'test' ))

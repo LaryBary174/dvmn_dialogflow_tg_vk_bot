@@ -1,43 +1,65 @@
-from telegram.ext import Application, MessageHandler, CommandHandler, filters
+import time
+import requests
+import telegram
+from environs import Env
+from telegram.ext import Updater, MessageHandler, Filters,CallbackContext
+from functools import partial
+from bot_for_logging import get_logger
 from dialogflow_api import detect_intent_texts
 
 
-async def start(update, context):
-    """Обработчик команды /start"""
-    await update.message.reply_text("Привет! Я бот, подключенный к Dialogflow. Напиши мне что-нибудь!")
-
-
-async def handle_message(update, context):
-    """Обрабатываем входящие текстовые сообщения"""
-    if not update.message or not update.message.text:  # Игнорируем пустые сообщения
+def handle_message(update, context: CallbackContext, project_id: str):
+    if not update.message or not update.message.text:
         return
 
-    text = update.message.text  # Получаем текст сообщения пользователя
-    chat_id = update.effective_user.id  # Получаем ID чата пользователя
+    text = update.message.text
+    chat_id = update.effective_user.id
+    response = detect_intent_texts(project_id, chat_id, [text], 'RU-ru')
 
-    # Вызываем Dialogflow API
-    response = detect_intent_texts('denis-lxju', chat_id, [text], 'RU-ru')
 
-    # Отправляем ответ от Dialogflow пользователю
-    await update.message.reply_text(response)
+    update.message.reply_text(response)
 
 
 def main():
-    TOKEN = "7808382160:AAHRd-iVztS4eVchkwbITXjp9o0QG3sJf2o"  # Ваш токен бота от BotFather
+    env = Env()
+    env.read_env()
+    bot_token = env.str("TELEGRAM_BOT_TOKEN")
+    logger_bot_token = env.str("TG_LOG_TOKEN")
+    logger_chat_id = env.str("TELEGRAM_CHAT_ID")
+    project_id = env.str('GOOGLE_PROJECT_ID')
+    logger_bot = telegram.Bot(token=logger_bot_token)
+    logger = get_logger(logger_bot, logger_chat_id)
+    updater = Updater(token=bot_token, use_context=True)
+    dispatcher = updater.dispatcher
 
-    # Создаем приложение
-    application = Application.builder().token(TOKEN).build()
 
-    # Обработчики команд
-    application.add_handler(CommandHandler("start", start))  # Команда /start
+    dispatcher.add_handler(
+        MessageHandler(Filters.text & ~Filters.command, partial(handle_message, project_id=project_id))
+    )
 
-    # Обработчик текстовых сообщений
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Запуск бота
-    print("Бот запущен...")
-    application.run_polling()
+    while True:
+        try:
+            logger.info("Бот запущен...")
+            updater.start_polling()
+            updater.idle()
+        except requests.exceptions.ReadTimeout:
+            logger.warning('Повтор запроса')
 
+            continue
+        except requests.exceptions.ConnectionError:
+            logger.error('Ошибка соединения, повторная попытка через 10 секунд')
+
+
+            time.sleep(10)
+        except telegram.error.TelegramError:
+            logger.error('Ошибка Телеграмм, повторная попытка через 10 секунд')
+
+            time.sleep(10)
+        except telegram.error.NetworkError:
+            logger.error('Ошибка подключения, повторная попытка через 10 сек')
+
+            time.sleep(10)
 
 if __name__ == "__main__":
     main()
