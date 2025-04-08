@@ -82,6 +82,7 @@ py load_data_for_intent.py -u example.questions.json
 
 
 ### Запуск ботов
+![bot](https://github.com/user-attachments/assets/1a2151a4-591d-41a4-b8ee-67a695fd9d69)
 Запуск VK бота
 ```
 py vk_bot.py
