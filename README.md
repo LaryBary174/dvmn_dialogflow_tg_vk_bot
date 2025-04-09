@@ -92,6 +92,7 @@ py vk_bot.py
 ```
 py telegram_bot.py
 ```
+Пример работы [VK](https://vk.com/club229981207)
 
 ### Цель проекта 
 
