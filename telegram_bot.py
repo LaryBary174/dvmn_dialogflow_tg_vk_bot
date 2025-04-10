@@ -2,7 +2,7 @@ import time
 import requests
 import telegram
 from environs import Env
-from telegram.ext import Updater, MessageHandler, Filters,CallbackContext
+from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from functools import partial
 from bot_for_logging import setup_tg_logger
 from dialogflow_api import detect_intent_texts
@@ -16,7 +16,6 @@ def handle_message(update, context: CallbackContext, project_id: str):
     chat_id = update.effective_user.id
     session_id = f'tg-{chat_id}'
     response = detect_intent_texts(project_id, session_id, [text], 'RU-ru')
-
 
     update.message.reply_text(response)
 
@@ -33,11 +32,9 @@ def main():
     updater = Updater(token=bot_token, use_context=True)
     dispatcher = updater.dispatcher
 
-
     dispatcher.add_handler(
         MessageHandler(Filters.text & ~Filters.command, partial(handle_message, project_id=project_id))
     )
-
 
     while True:
         try:
@@ -51,7 +48,6 @@ def main():
         except requests.exceptions.ConnectionError:
             logger.error('Ошибка соединения, повторная попытка через 10 секунд')
 
-
             time.sleep(10)
         except telegram.error.TelegramError:
             logger.error('Ошибка Телеграмм, повторная попытка через 10 секунд')
@@ -61,6 +57,7 @@ def main():
             logger.error('Ошибка подключения, повторная попытка через 10 сек')
 
             time.sleep(10)
+
 
 if __name__ == "__main__":
     main()
