@@ -4,7 +4,7 @@ import telegram
 from environs import Env
 from telegram.ext import Updater, MessageHandler, Filters,CallbackContext
 from functools import partial
-from bot_for_logging import get_logger
+from bot_for_logging import setup_tg_logger
 from dialogflow_api import detect_intent_texts
 
 
@@ -14,7 +14,8 @@ def handle_message(update, context: CallbackContext, project_id: str):
 
     text = update.message.text
     chat_id = update.effective_user.id
-    response = detect_intent_texts(project_id, chat_id, [text], 'RU-ru')
+    session_id = f'tg-{chat_id}'
+    response = detect_intent_texts(project_id, session_id, [text], 'RU-ru')
 
 
     update.message.reply_text(response)
@@ -28,7 +29,7 @@ def main():
     logger_chat_id = env.str("TELEGRAM_CHAT_ID")
     project_id = env.str('GOOGLE_PROJECT_ID')
     logger_bot = telegram.Bot(token=logger_bot_token)
-    logger = get_logger(logger_bot, logger_chat_id)
+    logger = setup_tg_logger(logger_bot, logger_chat_id)
     updater = Updater(token=bot_token, use_context=True)
     dispatcher = updater.dispatcher
 
